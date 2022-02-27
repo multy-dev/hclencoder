@@ -1,32 +1,42 @@
 # hclencoder<br>[![Build Status](https://travis-ci.org/rodaine/hclencoder.svg?branch=master)](https://travis-ci.org/rodaine/hclencoder) [![GoDoc](https://godoc.org/github.com/rodaine/hclencoder?status.svg)](https://godoc.org/github.com/rodaine/hclencoder)
 
+ 
 `hclencoder` encodes/marshals/converts Go types into [HCL (Hashicorp Configuration Language)][HCL]. `hclencoder` ensures correctness in the generated HCL, and can be useful for creating programmatic, type-safe config files.
+
+This fork is used for [multy](https://multy.dev) and addresses some of the problems we had - such as encoding expressions, escaping strings, and block lists. It uses hcl v2 api (hclwrite) rather than the old api by the original repo.
 
 ```go
 package example
 
 type Farm struct {
-  Name     string    `hcl:"name"`
-  Owned    bool      `hcl:"owned"`
-  Location []float64 `hcl:"location"`
+	Name     string    `hcl:"name"`
+	Owned    bool      `hcl:"owned"`
+	Location []float64 `hcl:"location"`
 }
 
 type Farmer struct {
-  Name                 string `hcl:"name"`
-  Age                  int    `hcl:"age"`
-  SocialSecurityNumber string `hcle:"omit"`
+	Name                 string `hcl:"name,expr"`
+	Age                  int    `hcl:"age"`
+	SocialSecurityNumber string `hcle:"omit"`
 }
 
 type Animal struct {
-  Name  string `hcl:",key"`
-  Sound string `hcl:"says" hcle:"omitempty"`
+	Name  string `hcl:",key"`
+	Sound string `hcl:"says" hcle:"omitempty"`
+}
+
+type Pet struct {
+	Species string `hcl:",key"`
+	Name    string `hcl:",key"`
+	Sound   string `hcl:"says" hcle:"omitempty"`
 }
 
 type Config struct {
-  Farm      `hcl:",squash"`
-  Farmer    Farmer            `hcl:"farmer"`
-  Animals   []Animal          `hcl:"animal"`
-  Buildings map[string]string `hcl:"buildings"`
+	Farm      `hcl:",squash"`
+	Farmer    Farmer            `hcl:"farmer"`
+	Animals   []Animal          `hcl:"animal,blocks"`
+	Pets      []Pet             `hcl:"pet,blocks"`
+	Buildings map[string]string `hcl:"buildings"`
 }
 
 input := Config{
@@ -36,7 +46,7 @@ input := Config{
     Location: []float64{12.34, -5.67},
   },
   Farmer: Farmer{
-    Name:                 "Robert Beauregard-Michele McDonald, III",
+    Name:                 "var.name",
     Age:                  65,
     SocialSecurityNumber: "please-dont-share-me",
   },
@@ -51,6 +61,13 @@ input := Config{
     },
     {
       Name: "rock",
+    },
+  },		
+  Pets: []Pet{
+    {
+      Species: "cat",
+      Name:    "whiskers",
+      Sound:   "meow",
     },
   },
   Buildings: map[string]string{
@@ -71,7 +88,7 @@ fmt.Print(string(hcl))
 //owned    = true
 //location = [12.34, -5.67]
 //farmer {
-//   name = "Robert Beauregard-Michele McDonald, III"
+//   name = var.name
 //   age  = 65
 //}
 //animal "cow" {
