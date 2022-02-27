@@ -2,6 +2,7 @@ package hclencoder
 
 import (
 	"fmt"
+	"github.com/zclconf/go-cty/cty"
 	"io/ioutil"
 	"testing"
 
@@ -39,6 +40,29 @@ func TestEncoder(t *testing.T) {
 				4.56,
 			},
 			Output: "basic",
+		},
+		{
+			ID: "cty value",
+			Input: struct {
+				String             cty.Value
+				Map                cty.Value
+				Slice              cty.Value
+				TemplateExpression cty.Value
+			}{
+				String: cty.StringVal("test"),
+				Map: cty.ObjectVal(map[string]cty.Value{
+					"outer": cty.MapVal(map[string]cty.Value{
+						"inner": cty.NumberIntVal(5),
+					}),
+				}),
+				Slice: cty.TupleVal([]cty.Value{
+					cty.ListVal([]cty.Value{cty.StringVal("foo")}),
+					cty.StringVal("bar"),
+					cty.NullVal(cty.String),
+				}),
+				TemplateExpression: cty.StringVal("${func(\"str\")}\n"),
+			},
+			Output: "cty-value",
 		},
 		{
 			ID: "escaped strings",
