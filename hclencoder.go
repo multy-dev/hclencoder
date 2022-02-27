@@ -30,7 +30,7 @@ func Encode(in interface{}) ([]byte, error) {
 func addRootBlock(block *hclwrite.Block, f *hclwrite.File) {
 	// root blocks without types are squashed by default
 	if block.Type() == "" {
-		SquashBlock(block, f.Body())
+		squashBlock(block, f.Body())
 	} else {
 		f.Body().AppendBlock(block)
 	}

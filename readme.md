@@ -3,6 +3,8 @@
 `hclencoder` encodes/marshals/converts Go types into [HCL (Hashicorp Configuration Language)][HCL]. `hclencoder` ensures correctness in the generated HCL, and can be useful for creating programmatic, type-safe config files.
 
 ```go
+package example
+
 type Farm struct {
   Name     string    `hcl:"name"`
   Owned    bool      `hcl:"owned"`
@@ -65,34 +67,25 @@ if err != nil {
 fmt.Print(string(hcl))
 
 // Output:
-// name = "Ol' McDonald's Farm"
-//
-// owned = true
-//
-// location = [
-//   12.34,
-//   -5.67,
-// ]
-//
-// farmer {
+//name     = "Ol' McDonald's Farm"
+//owned    = true
+//location = [12.34, -5.67]
+//farmer {
 //   name = "Robert Beauregard-Michele McDonald, III"
 //   age  = 65
-// }
-//
-// animal "cow" {
+//}
+//animal "cow" {
 //   says = "moo"
-// }
-//
-// animal "pig" {
+//}
+//animal "pig" {
 //   says = "oink"
-// }
-//
-// animal "rock" {}
-//
-// buildings {
-//   Barn  = "456 Digits Drive"
-//   House = "123 Numbers Lane"
-// }
+//}
+//animal "rock" {
+//}
+//pet "cat" "whiskers" {
+//   says = "meow"
+//}
+//buildings = { "Barn" = "456 Digits Drive", "House" = "123 Numbers Lane" }
 //
 ```
 
@@ -100,10 +93,9 @@ fmt.Print(string(hcl))
 
 - [x] Encodes any `struct` or `map[string]T` type as the input for the generated HCL
 - [x] Supports all value, interface, and pointer types supported by the HCL encoder: `bool`, `int`, `float64`, `string`, `struct`, `[]T`, `map[string]T`
-- [x] Uses the [HCL Printer][hclprinter] to ensure consistency with the output HCL
+- [x] Uses hclwriter, the official way to write HCL (v2)
 - [x] Map types are sorted to ensure ordering
-- [ ] Support raw HCL [`ast.Node`][node] types in the struct.
-- [ ] Support `HCLMarshaler` interface for types to encode themselves, similar to [`json.Marshaler`][jsonmarshal]
+- [x] Supports template expressions (${...}) in strings without escaping them
 
 
 ## Struct Tags
@@ -112,9 +104,13 @@ fmt.Print(string(hcl))
 
 - **`hcl:"custom_name"`** - specifies the name of the field as represented in the output HCL to be `custom_name`. The default behavior is to use the unmodified name of the field. If other tag fields are desired but the default name behavior should be used, leave the first comma-delimited value empty (eg, `hcl:",key"`).
 
-- **`hcl:",key"`** - indicates the field should be used as part of the compound key for the HCL block. This field must be of type `string`.
+- **`hcl:",key"`** - indicates the field should be used as a label for the HCL block. This field must be of type `string`.
 
-- **`hcl:",squash"`** - attached to anonymous fields of a struct, indicates to lift the fields of that value into the parent block's scope transparently. Otherwise, the field's type is used as the key for the value.
+- **`hcl:",squash"`** - attached to fields of a struct, indicates to lift the fields of that value into the parent block's scope transparently.
+
+- **`hcl:",expr"`** - attached to a string. Encodes a string exactly as an expression, without adding double quotes or escaping sequences.
+
+- **`hcl:",blocks"`** - attached to a slice of structs. Encodes the slice as multiple blocks instead of an array of objects.
 
 - **`hcl:",unusedKeys"`** - identifies this debug field which stores any unused keys found by the decoder. This field shoudl be of type `[]string`. This has the same behavior as the `hcle:"omit"` tag and is not encoded.
 

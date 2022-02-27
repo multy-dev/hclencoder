@@ -2,6 +2,9 @@ package hclencoder
 
 import (
 	"fmt"
+	"github.com/zclconf/go-cty/cty"
+	"github.com/zclconf/go-cty/cty/json"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 )
@@ -75,4 +78,55 @@ func escapeAndAppend(buf []byte, r rune, escapeQuote bool) []byte {
 		}
 	}
 	return buf
+}
+
+// ValueToString converts a cty.Value into its HCL representation
+func ValueToString(val cty.Value) (string, error) {
+	if !val.IsKnown() {
+		return "", fmt.Errorf("can't stringify unknown values")
+	}
+	if val.IsNull() {
+		return "null", nil
+	}
+	var err error
+	if val.Type().IsListType() || val.Type().IsTupleType() || val.Type().IsSetType() {
+		var elems []string
+		val.ForEachElement(func(_ cty.Value, val cty.Value) (stop bool) {
+			innerVal, err := ValueToString(val)
+			if err != nil {
+				return true
+			}
+
+			elems = append(elems, innerVal)
+			return false
+		})
+		if err != nil {
+			return "", err
+		}
+		return fmt.Sprintf("[%s]", strings.Join(elems, ",")), nil
+	} else if val.Type().IsMapType() || val.Type().IsObjectType() {
+		var elems []string
+		val.ForEachElement(func(key cty.Value, val cty.Value) (stop bool) {
+			keyStr, err := ValueToString(key)
+			if err != nil {
+				return true
+			}
+			valStr, err := ValueToString(val)
+			if err != nil {
+				return true
+			}
+			elems = append(elems, fmt.Sprintf("%s=%s", keyStr, valStr))
+			return false
+		})
+		return fmt.Sprintf("{%s}", strings.Join(elems, ",")), nil
+	} else if val.Type() == cty.String {
+		return fmt.Sprintf(`"%s"`, EscapeString(val.AsString())), nil
+	} else {
+		bytes, err := json.SimpleJSONValue{Value: val}.MarshalJSON()
+		if err != nil {
+			return "", fmt.Errorf("unable to marshal value of type %s: %s", val.Type().FriendlyName(), err.Error())
+		}
+		return string(bytes), nil
+	}
+
 }
