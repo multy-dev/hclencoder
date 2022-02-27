@@ -33,8 +33,8 @@ func Example() {
 	type Config struct {
 		Farm      `hcl:",squash"`
 		Farmer    Farmer            `hcl:"farmer"`
-		Animals   []Animal          `hcl:"animal"`
-		Pets      []Pet             `hcl:"pet"`
+		Animals   []Animal          `hcl:"animal,blocks"`
+		Pets      []Pet             `hcl:"pet,blocks"`
 		Buildings map[string]string `hcl:"buildings"`
 	}
 
@@ -83,37 +83,24 @@ func Example() {
 	fmt.Print(string(hcl))
 
 	// Output:
-	// name = "Ol' McDonald's Farm"
-	//
-	// owned = true
-	//
-	// location = [
-	//   12.34,
-	//   -5.67,
-	// ]
-	//
-	// farmer {
+	//name     = "Ol' McDonald's Farm"
+	//owned    = true
+	//location = [12.34, -5.67]
+	//farmer {
 	//   name = "Robert Beauregard-Michele McDonald, III"
 	//   age  = 65
-	// }
-	//
-	// animal "cow" {
+	//}
+	//animal "cow" {
 	//   says = "moo"
-	// }
-	//
-	// animal "pig" {
+	//}
+	//animal "pig" {
 	//   says = "oink"
-	// }
-	//
-	// animal "rock" {}
-	//
-	// pet "cat" "whiskers" {
+	//}
+	//animal "rock" {
+	//}
+	//pet "cat" "whiskers" {
 	//   says = "meow"
-	// }
-	//
-	// buildings =  {
-	//   Barn  = "456 Digits Drive"
-	//   House = "123 Numbers Lane"
-	// }
+	//}
+	//buildings = { "Barn" = "456 Digits Drive", "House" = "123 Numbers Lane" }
 	//
 }
