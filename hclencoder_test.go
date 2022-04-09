@@ -68,10 +68,10 @@ func TestEncoder(t *testing.T) {
 			ID: "escaped strings",
 			Input: struct {
 				EscapedString  string
-				TemplateString string
+				TemplateString string `hcl:",expr"`
 			}{
 				"\n\t\r\\\"",
-				"\n\t\r\\\" ${\"\\\\ \\\"\"}",
+				"\"test-\u0041${\"\\\\ \\\"\"}\"",
 			},
 			Output: "escaped-strings",
 		},

@@ -50,7 +50,7 @@ func tokenize(in reflect.Value, meta fieldMeta) (tkns hclwrite.Tokens, err error
 	case reflect.String:
 		val := in.String()
 		if !meta.expression {
-			val = fmt.Sprintf(`"%s"`, EscapeString(val))
+			return hclwrite.TokensForValue(cty.StringVal(val)), nil
 		}
 		// Unfortunately hcl escapes template expressions (${...}) when using hclwrite.TokensForValue. So we escape
 		// everything but template expressions and then parse the expression into tokens.
